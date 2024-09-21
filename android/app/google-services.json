@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "285574404343",
+    "project_id": "mirchily-9f842",
+    "storage_bucket": "mirchily-9f842.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:285574404343:android:aea4f419424bc72bd59bf2",
+        "android_client_info": {
+          "package_name": "com.example.untitled"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCn4LwiIL9INfFH1zvyWY2caDq75gid5KE"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
