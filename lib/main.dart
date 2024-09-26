@@ -3,6 +3,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:untitled/admin/maindashboard.dart';
 import 'firebase_options.dart';
 final CartModel cart = CartModel();
 
@@ -193,7 +194,6 @@ class WelcomeScreen extends StatelessWidget {
 }
 
 
-
 class LoginScreen extends StatefulWidget {
   @override
   _LoginScreenState createState() => _LoginScreenState();
@@ -204,20 +204,54 @@ class _LoginScreenState extends State<LoginScreen> {
   String email = '';
   String password = '';
 
+  @override
+  void initState() {
+    super.initState();
+    createSampleAdminUser(); // Call to create sample admin user
+  }
+
+  Future<void> createSampleAdminUser() async {
+    try {
+      // Create a sample admin user if it doesn't exist
+      UserCredential userCredential = await _auth.createUserWithEmailAndPassword(
+        email: 'admin@gmail.com',
+        password: '123456',
+      );
+      print('Sample admin user created: ${userCredential.user?.email}');
+    } catch (e) {
+      // Handle the error if the user already exists
+      if (e is FirebaseAuthException && e.code == 'email-already-in-use') {
+        print('Admin user already exists.');
+      } else {
+        print('Error creating admin user: $e');
+      }
+    }
+  }
+
   Future<void> loginUser() async {
     try {
       UserCredential userCredential = await _auth.signInWithEmailAndPassword(
         email: email,
         password: password,
       );
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (context) => WelcomeBackScreen()),
-      );
+
+      // Check if the user is admin
+      if (email == 'admin@gmail.com' && password == "123456") {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => AdminPanel()),
+        );
+      } else {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => WelcomeBackScreen()),
+        );
+      }
     } catch (e) {
       print(e);
-      ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text('Login failed. Please try again.')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Login failed. Please try again.')),
+      );
     }
   }
 
