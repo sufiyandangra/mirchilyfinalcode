@@ -5,6 +5,11 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:untitled/admin/maindashboard.dart';
 import 'firebase_options.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
+
+
+
 final CartModel cart = CartModel();
 
 
@@ -45,11 +50,9 @@ class Product {
   final String imageAssetPath;
   final double price;
 
-  Product({
-    required this.name,
-    required this.imageAssetPath,
-    required this.price,
-  });
+  Product({required this.name, required this.imageAssetPath, required this.price});
+
+
 
   @override
   bool operator ==(Object other) =>
@@ -725,32 +728,46 @@ class ResetPasswordScreen extends StatelessWidget {
 
 
 
-// ProductListScreen class
-class ProductListScreen extends StatelessWidget {
+class ProductListScreen extends StatefulWidget {
   final String category;
-  final List<Product> vegProducts = [
-    Product(name: 'Paneer Lababdar', imageAssetPath: 'assets/images/paneer.jpg', price: 60),
-    Product(name: 'Sambar Masala', imageAssetPath: 'assets/images/sambar.jpg', price: 45),
-    Product(name: 'Shahi Biryani Masala', imageAssetPath: 'assets/images/shahibiryani.jpg', price: 70),
-    Product(name: 'Paneer Chilly Masala', imageAssetPath: 'assets/images/paneerchilly.jpg', price: 65),
-  ];
-
-  final List<Product> nonVegProducts = [
-    Product(name: 'Butter Chicken', imageAssetPath: 'assets/images/butter.jpg', price: 60),
-    Product(name: 'Chicken Angara', imageAssetPath: 'assets/images/angara.jpg', price: 70),
-    Product(name: 'Tandoori Chicken', imageAssetPath: 'assets/images/tandoori.jpg', price: 40),
-    Product(name: 'Chicken Chilly', imageAssetPath: 'assets/images/paneerchilly.jpg', price: 65),
-  ];
 
   ProductListScreen({Key? key, required this.category}) : super(key: key);
 
   @override
-  Widget build(BuildContext context) {
-    List<Product> products = category == 'Veg' ? vegProducts : nonVegProducts;
+  _ProductListScreenState createState() => _ProductListScreenState();
+}
 
+class _ProductListScreenState extends State<ProductListScreen> {
+  List<Product> products = [];
+
+  @override
+  void initState() {
+    super.initState();
+    fetchProducts();
+  }
+
+  Future<void> fetchProducts() async {
+    final response = await http.get(Uri.parse('https://localhost:5000/api/products?category=${widget.category}'));
+
+    if (response.statusCode == 200) {
+      List<dynamic> jsonData = json.decode(response.body);
+      setState(() {
+        products = jsonData.map((product) => Product(
+          name: product['name'],
+          imageAssetPath: product['imageAssetPath'],
+          price: product['price'].toDouble(),
+        )).toList();
+      });
+    } else {
+      throw Exception('Failed to load products');
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(category + ' Products'),
+        title: Text('${widget.category} Products'),
         backgroundColor: Colors.red,
         actions: [
           IconButton(
@@ -764,7 +781,9 @@ class ProductListScreen extends StatelessWidget {
           ),
         ],
       ),
-      body: GridView.builder(
+      body: products.isEmpty
+          ? Center(child: CircularProgressIndicator())
+          : GridView.builder(
         padding: const EdgeInsets.all(8.0),
         gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
           crossAxisCount: 2,
@@ -780,7 +799,7 @@ class ProductListScreen extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: <Widget>[
                 Expanded(
-                  child: Image.asset(
+                  child: Image.network(
                     product.imageAssetPath,
                     fit: BoxFit.contain,
                   ),
@@ -813,7 +832,7 @@ class ProductListScreen extends StatelessWidget {
                       foregroundColor: Colors.white,
                     ),
                     onPressed: () {
-                      cart.addProduct(product);
+                      // Add to cart logic here
                       ScaffoldMessenger.of(context).showSnackBar(
                         SnackBar(content: Text('${product.name} added to cart')),
                       );
@@ -829,7 +848,7 @@ class ProductListScreen extends StatelessWidget {
                       foregroundColor: Colors.white,
                     ),
                     onPressed: () {
-                      cart.addProduct(product);
+                      // Navigate to payment page
                       Navigator.push(
                         context,
                         MaterialPageRoute(builder: (context) => PaymentPage()),
